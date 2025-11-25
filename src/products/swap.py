@@ -50,6 +50,16 @@ class InterestRateSwap:
         dfN = curve.discount_factor(tN)
 
         return self.notional * (df0 - dfN)
+    
+    def swap_rate(self,curve):
+        """
+        Swap rate, rate that equalize fixed leg and floating leg.
+        """
+        df0 = curve.discount_factor(self.payment_times[0])
+        dfT = curve.discount_factor(self.payment_times[-1])
+        pv = self.pv_fixed_leg(curve)/self.fixed_rate/self.notional
+        return (df0 - dfT)/pv    
+
 
     def price(self, curve):
         """
