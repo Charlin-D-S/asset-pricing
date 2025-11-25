@@ -49,3 +49,13 @@ class YieldCurve:
         """
         r = self.zero_rate(t)
         return math.exp(-r * t)
+
+
+    @classmethod
+    def from_csv(cls, directory = '../data/yield_curve.csv'):
+        """
+        Build a YieldCurve from csv data.
+        """
+        df = pd.read_csv(directory)
+        return cls(maturities=list(df.maturity), zero_rates=list(df.rate))
+

@@ -1,0 +1,3 @@
+sdmx1
+pandas
+numpy
