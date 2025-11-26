@@ -1,5 +1,5 @@
 import math
-
+import pandas as pd
 class YieldCurve:
     """
     Zero-coupon yield curve with linear interpolation.

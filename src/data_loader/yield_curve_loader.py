@@ -21,26 +21,45 @@ def get_maturity(row):
         return int(code[3])
 
 class YieldCurveLoader:
-    def __init__():
+    def __init__(self):
         pass
     def get_start_period(self):
         # Periode initiale
+        df = self.get_rate('SR_3M')
+        if not df.empty:
+            return df.index[-1][-1]
+        else:
+            return None
+    
+
+    def get_rate(self,key : str,start_period='2025-11-24')->float:
+        """
+        Retrieve the latest yield rate for a given key
+        
+        :param key: the maturity key (e.g : "SR_9M","SR_1Y)
+        
+        """ 
         keys = {
-                'DATA_TYPE_FM': 'SR_3M',
+                'DATA_TYPE_FM': key,
                 'INSTRUMENT_FM': 'G_N_A',
                 'FREQ': 'B',
                 'REF_AREA': 'U2',
                 'CURRENCY': 'EUR',
                 'PROVIDER_FM': '4F',
                 'PROVIDER_FM_ID': 'SV_C_YM'
-            }
-        data_message = ecb.data('YC', key=keys,params={'startPeriod': '2025-11-24'})
-        df = sdmx.to_pandas(data_message)
+        }
+        try:
+            data_message = ecb.data('YC', key=keys,params={'startPeriod': start_period})
+            df = sdmx.to_pandas(data_message)
+            return df
+        except Exception as e:
+            return None
 
-        return df.index[-1][-1]
 
     def reload_yield_curve(self):
         start_period = self.get_start_period()
+        if not start_period:
+            start_period = '2025-11-24'
         try:
             df_yield = pd.read_csv('../data/yield_curve.csv')
             last_values = {
@@ -55,19 +74,9 @@ class YieldCurveLoader:
 
         # Récupérer la dernière valeur pour chaque clé
         for key in KEYS:
-            keys = {
-                'DATA_TYPE_FM': key,
-                'INSTRUMENT_FM': 'G_N_A',
-                'FREQ': 'B',
-                'REF_AREA': 'U2',
-                'CURRENCY': 'EUR',
-                'PROVIDER_FM': '4F',
-                'PROVIDER_FM_ID': 'SV_C_YM'
-            }
-            data_message = ecb.data('YC', key=keys,params={'startPeriod': start_period})
-            df = sdmx.to_pandas(data_message)
+            df = self.get_rate(key=key,start_period=start_period)
             if not df.empty:
-                last_values[key] = df[-1]
+                last_values[key] = df.iloc[-1]
 
         result_df = pd.DataFrame(list(last_values.items()), columns=['key', 'rate'])
         result_df['maturity'] = result_df.apply(get_maturity,axis=1)
