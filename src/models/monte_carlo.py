@@ -1,5 +1,5 @@
 import numpy as np
-from products.option import EuropeanCall, EuropeanPut, Option
+from products.option import Option
 
 class MonteCarloPricer:
     r"""
