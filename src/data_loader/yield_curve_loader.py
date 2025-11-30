@@ -20,6 +20,8 @@ def get_maturity(row):
     if "M" in code:
         return int(code[3])*q
     else : 
+        code = code.replace("SR_",'')
+        code = code.replace("Y",'')
         return int(code[3])
 
 class YieldCurveLoader:

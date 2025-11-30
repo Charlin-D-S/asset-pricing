@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
@@ -30,20 +31,24 @@ def get_bond(nominal, coupon_rate, maturity, frequency):
 
 @st.cache_data
 def curve():
-    return YieldCurve.from_csv()
-yield_curve = curve()
+    yield_curve = YieldCurve.from_csv()
+    yield_curve_df = pd.DataFrame({'maturity':yield_curve.maturities,
+                                  'rate':yield_curve.zero_rates})
+    return yield_curve,yield_curve_df
+yield_curve,yield_curve_df = curve()
 
 @st.cache_data
-def get_volatility(text,maturity):
+def get_volatility(ticker,text,maturity):
     b = text=='Call'
-    return EquityLoader().get_implied_volatility(call=b,T=maturity)
+    return EquityLoader().get_implied_volatility(ticker_symbol=ticker,call=b,T=maturity)
 
 
 @st.cache_data
 def get_historic(ticker,period='2y'):
-    return EquityLoader().get_historic(ticker=ticker,period=period)
-
-
+    data = EquityLoader().get_historic(ticker=ticker,period=period)
+    data.columns = [ col[0] for col in data.columns.values]
+    data['date'] = pd.to_datetime(data.index)
+    return data[['date','Close','High','Low','Open']]
 # ------------------------------------------------------------
 # PAGE HEADER
 # ------------------------------------------------------------
@@ -72,7 +77,7 @@ if product_type == "Derivative":
     # -------------------------------
     ticker = st.selectbox(
         "Select underlying asset:",
-        ["RNO.PA", "MCP.XD", "GOOG", "SPY", "BTC-USD", "EURUSD=X"]
+        ["RNO.PA", "MCP.XD", "^FCHI", "LVC.PA", "CA10S.PA", "EURUSD=X"]
     )
 
     # -------------------------------
@@ -81,9 +86,10 @@ if product_type == "Derivative":
     st.subheader("Underlying Historical Price")
 
     data = get_historic(ticker=ticker,period='1y')
-
+    # st.write("Colonnes du DataFrame :", data.columns.tolist())
+    # st.dataframe(data.head())
     if not data.empty:
-        st.line_chart(data["Close"])
+        st.line_chart(data = data,y='Close',x='date')
     else:
         st.warning("No market data available.")
 
@@ -100,7 +106,7 @@ if product_type == "Derivative":
     # rate = st.number_input("Interest rate", value=0.02)
 
     option_type = st.radio("Option type", ["Call", "Put"])
-
+    st.write("Spot price:",data["Close"][-1])
     # Create option object
     if option_type == "Call":
         option = EuropeanCall(strike=strike, maturity=maturity)
@@ -111,7 +117,7 @@ if product_type == "Derivative":
     # 5A. Pricing model selection
     # -------------------------------
     model_choice = st.selectbox("Pricing model", ["Black-Scholes", "Monte Carlo"])
-    vol = get_volatility(text=option_type,maturity=maturity)
+    vol = get_volatility(ticker=ticker,text=option_type,maturity=maturity)
     rate=yield_curve.zero_rate(t=maturity)
     # -------------------------------
     # 6A. Pricing & Greeks
@@ -122,16 +128,16 @@ if product_type == "Derivative":
             model = get_black_scholes_model(spot=data["Close"][-1], rate=rate,vol=vol)
             price = model.price(option)
             delta = model.delta(option)
-            gamma = model.gamma(option, vol)
-            vega = model.vega(option, vol)
+            gamma = model.gamma(option)
+            vega = model.vega(option)
 
         else:  # Monte Carlo
             mc = get_monte_carlo_model(spot=data["Close"][-1], rate=rate,vol=vol)
 
             price = mc.price(option=option)
-            delta = mc.delta(strike)
-            gamma = mc.gamma(strike)
-            vega = mc.vega(strike)
+            delta = mc.delta(option=option)
+            gamma = mc.gamma(option=option)
+            vega = mc.vega(option=option)
 
         # -------------------------------
         # 7A. Display results
@@ -154,8 +160,8 @@ else:
     # -------------------------------
     st.subheader("Euro Area Risk-Free Yield Curve (ECB)")
 
-    if st.button("Load ECB curve"):
-        st.line_chart(yield_curve.set_index("maturity")["yield"])
+    #if st.button("Load ECB curve"):
+    st.line_chart(x='maturity',y='rate',data = yield_curve_df)
 
     # -------------------------------
     # 3B. Bond parameters
@@ -163,12 +169,12 @@ else:
     st.subheader("Bond Parameters")
 
     col1, col2, col3 = st.columns(3)
-    nominal = col1.number_input("Nominal", value=100.0)
+    nominal = col1.number_input("Nominal (£)", value=100.0)
     coupon_rate = col2.number_input("Coupon rate (%)", value=2.0)
     maturity = col3.number_input("Maturity (years)", value=5.0)
 
-    frequency = st.selectbox("Coupon frequency", ["Annual", "Semiannual"])
-
+    freq = st.selectbox("Coupon frequency", ["Annual", "Semiannual"])
+    frequency = 1 if freq=="Annual" else 2
     # -------------------------------
     # 4B. Pricing
     # -------------------------------
