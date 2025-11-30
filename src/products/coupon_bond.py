@@ -1,4 +1,5 @@
 from curves.yield_curve import YieldCurve
+import numpy as np
 class CouponBond:
     """
     Plain vanilla coupon bond.
@@ -61,5 +62,72 @@ class CouponBond:
                 pv += cf * df
         
         return pv
+    
+
+    def duration(self, curve:YieldCurve):
+        """
+        Macaulay duration using the discount curve (curve.get_df(t)).
+        """
+        cashflows = []
+        times = []
+
+        # Compute the coupon amount per period
+        coupon_amount = self.nominal * self.coupon_rate / self.freq
+
+        # Payment dates
+        n_periods = int(self.maturity * self.freq)
+
+        for i in range(1, n_periods + 1):
+            t = i / self.freq
+
+            # Last period: add nominal
+            if i == n_periods:
+                cf = coupon_amount + self.nominal
+            else:
+                cf = coupon_amount
+
+            cashflows.append(cf)
+            times.append(t)
+
+        # Present value of the bond
+        PV = sum(cf * curve.discount_factor(t)  for cf, t in zip(cashflows, times))
+
+        # Duration numerator
+        num = sum(t * cf * curve.discount_factor(t) for cf, t in zip(cashflows, times))
+
+        return num / PV
+
+
+    def convexity(self, curve:YieldCurve):
+        """
+        Convexity using the discount curve (curve.get_df(t)).
+        """
+        cashflows = []
+        times = []
+
+        coupon_amount = self.nominal * self.coupon_rate / self.freq
+        n_periods = int(self.maturity * self.freq)
+
+        for i in range(1, n_periods + 1):
+            t = i / self.freq
+
+            if i == n_periods:
+                cf = coupon_amount + self.nominal
+            else:
+                cf = coupon_amount
+
+            cashflows.append(cf)
+            times.append(t)
+
+        # Present value
+        PV = sum(cf * curve.discount_factor(t) for cf, t in zip(cashflows, times))
+
+        # Convexity numerator
+        num = sum(cf * curve.discount_factor(t) * t * (t + 1 / self.freq)
+                  for cf, t in zip(cashflows, times))
+
+        # Convexity formula (annualized)
+        return num / (PV * 1)
+
     
 

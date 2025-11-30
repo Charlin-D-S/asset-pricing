@@ -1,7 +1,9 @@
 from sdmx import Client
 import pandas as pd
+import os
 
-
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DATA_PATH = os.path.join(BASE_DIR, "data", "yield_curve.csv")
 
 # Initialiser le client pour l'API de la BCE
 ecb = Client("ECB")
@@ -81,5 +83,5 @@ class YieldCurveLoader:
         result_df = pd.DataFrame(list(last_values.items()), columns=['key', 'rate'])
         result_df['maturity'] = result_df.apply(get_maturity,axis=1)
         result_df = result_df.sort_values(by="maturity")
-        result_df.to_csv('../data/yield_curve.csv')
+        result_df.to_csv(DATA_PATH)
 

@@ -1,5 +1,8 @@
 import math
 import pandas as pd
+import os
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DATA_PATH = os.path.join(BASE_DIR, "data", "yield_curve.csv")
 class YieldCurve:
     """
     Zero-coupon yield curve with linear interpolation.
@@ -84,7 +87,7 @@ class YieldCurve:
         return YieldCurve(maturities=maturities,zero_rates=zero_rates)
 
     @classmethod
-    def from_csv(cls, directory = '../data/yield_curve.csv'):
+    def from_csv(cls, directory = DATA_PATH):
         """
         Build a YieldCurve from csv data.
         """
