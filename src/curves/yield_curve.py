@@ -21,7 +21,7 @@ class YieldCurve:
 
     def zero_rate(self, t):
         """
-        Returns the zero-coupon rate for maturity t using linear interpolation.
+        Returns the zero-coupon rate for maturity t in years using linear interpolation.
         """
         # If exact maturity exists
         if t in self.maturities:
@@ -29,7 +29,7 @@ class YieldCurve:
 
         # If t is outside the curve range → flat extrapolation
         if t <= self.maturities[0]:
-            return self.zero_rates[0]
+            return self.zero_rates[0]*t/self.maturities[0]
         if t >= self.maturities[-1]:
             return self.zero_rates[-1]
 
@@ -50,6 +50,38 @@ class YieldCurve:
         r = self.zero_rate(t)
         return math.exp(-r * t)
 
+    def move_rate(self,dr=0):
+        """
+        move the curve rate by doing a translation 
+        
+        :param dr: the number to remove to each zero rate
+        """
+        maturities=[]
+        zero_rates=[]
+
+        for m,r in zip(self.maturities,self.zero_rates):
+            if r-dr>=0:
+                maturities.append(m)
+                zero_rates.append(r-dr)
+
+        return YieldCurve(maturities=maturities,zero_rates=zero_rates)
+
+    def move_time(self,dt=0):
+        """
+        move the curve rate by doing a time translation 
+        
+        :param dt: the number of years to remove to each maturity
+        """
+        max = max(self.maturities)
+        maturities=[]
+        zero_rates=[]
+
+        for t in self.maturities:
+            if t-dt>=0 and t-dt<max:
+                maturities.append(t-dt)
+                zero_rates.append(self.zero_rate(t-dt))
+
+        return YieldCurve(maturities=maturities,zero_rates=zero_rates)
 
     @classmethod
     def from_csv(cls, directory = '../data/yield_curve.csv'):

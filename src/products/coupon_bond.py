@@ -1,3 +1,4 @@
+from curves.yield_curve import YieldCurve
 class CouponBond:
     """
     Plain vanilla coupon bond.
@@ -45,7 +46,7 @@ class CouponBond:
 
         return flows
 
-    def price(self, curve):
+    def price(self, curve:YieldCurve,t=0):
         """
         Computes the present value of the bond using a yield curve object.
         
@@ -53,9 +54,12 @@ class CouponBond:
             discount_factor(t)
         """
         pv = 0.0
-        
-        for (t, cf) in self.cashflows():
-            df = curve.discount_factor(t)
-            pv += cf * df
+
+        for (i, cf) in self.cashflows():
+            if i-t>=0:
+                df = curve.discount_factor(i-t)
+                pv += cf * df
         
         return pv
+    
+

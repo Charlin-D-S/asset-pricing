@@ -1,3 +1,4 @@
+from curves.yield_curve import YieldCurve
 class InterestRateSwap:
     """
     Plain vanilla interest rate swap:
@@ -23,49 +24,53 @@ class InterestRateSwap:
         self.fixed_rate = fixed_rate
         self.payment_times = payment_times
 
-    def pv_fixed_leg(self, curve):
+    def pv_fixed_leg(self, curve:YieldCurve,t=0):
         """
-        Computes PV of the fixed leg using the zero-coupon curve.
+        Computes PV at `t` of the fixed leg using the zero-coupon curve.
         """
         pv = 0.0
-        for i, t in enumerate(self.payment_times):
-            if i == 0:
-                dt = t
-            else:
-                dt = t - self.payment_times[i-1]
+        for i, time in enumerate(self.payment_times):
+            if time-t>=0:
+                if i == 0:
+                    dt = time
+                else:
+                    dt = time - self.payment_times[i-1]
 
-            df = curve.discount_factor(t)
-            pv += dt * df
+                df = curve.discount_factor(time-t)
+                pv += dt * df
 
         return pv*self.fixed_rate*self.notional
 
-    def pv_floating_leg(self, curve):
+    def pv_floating_leg(self, curve:YieldCurve,t=0):
         """
         Floating leg PV = Notional * (DF(t0) - DF(tN))
         """
-        t0 = 0
-        tN = self.payment_times[-1]
+        times = [time-t for time in self.payment_times if time-t>=0]
+        t0 = times[0]
+        tN = times[-1]
 
         df0 = curve.discount_factor(t0)  # = 1
         dfN = curve.discount_factor(tN)
 
         return self.notional * (df0 - dfN)
     
-    def swap_rate(self,curve):
+    def swap_rate(self,curve:YieldCurve,t=0):
         """
         Swap rate, rate that equalize fixed leg and floating leg.
         """
-        df0 = curve.discount_factor(self.payment_times[0])
-        dfT = curve.discount_factor(self.payment_times[-1])
+        times = [time-t for time in self.payment_times if time-t>=0]
+        df0 = curve.discount_factor(times[0])
+        dfT = curve.discount_factor(times[-1])
         pv = self.pv_fixed_leg(curve)/self.fixed_rate/self.notional
         return (df0 - dfT)/pv    
 
 
-    def price(self, curve):
+    def price(self, curve:YieldCurve,t=0):
         """
         Swap value (payer fixed, receiver float).
         """
-        pv_fix = self.pv_fixed_leg(curve)
-        pv_flt = self.pv_floating_leg(curve)
+        pv_fix = self.pv_fixed_leg(curve,t=t)
+        pv_flt = self.pv_floating_leg(curve,t=t)
 
         return pv_flt - pv_fix
+    
