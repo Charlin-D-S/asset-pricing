@@ -1,10 +1,10 @@
-import sdmx
+from sdmx import Client
 import pandas as pd
 
 
 
 # Initialiser le client pour l'API de la BCE
-ecb = sdmx.Client("ECB")
+ecb = Client("ECB")
 
 KEYS = [
     "SR_3M", "SR_6M", "SR_9M",

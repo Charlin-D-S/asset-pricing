@@ -1,3 +1,9 @@
 sdmx1
 pandas
 numpy
+streamlit
+plotly
+scipy
+yfinance
+bs4
+requests
