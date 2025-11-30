@@ -22,13 +22,13 @@ class BlackScholesModel:
     def d2(self, strike, maturity):
         return self.d1(strike, maturity, self.vol) - self.vol * sqrt(maturity)
 
-    def price(self, option:Option):
+    def price(self, option):
         if isinstance(option, EuropeanCall):
             return self.call_price(option)
         if isinstance(option, EuropeanPut):
             return self.put_price(option)
         
-    def delta(self, option:Option):
+    def delta(self, option):
         if isinstance(option, EuropeanCall):
             return self.call_delta(option)
         if isinstance(option, EuropeanPut):

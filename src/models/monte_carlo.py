@@ -33,45 +33,51 @@ class MonteCarloPricer:
         C = e^{-rT} \mathbb{E}[\max(S_T - K, 0)]
     """
 
-    def __init__(self, spot: float, rate: float, dividend_yield: float = 0.0,vol = 1.0,n_sims=1_000):
+    def __init__(self, spot: float, rate: float, dividend_yield: float = 0.0,vol = 1.0,n_sims=10_000, seed=42):
         self.spot = spot
-        self.r = rate
+        self.rate = rate
         self.q = dividend_yield
         self.vol = vol
         self.n_sims = n_sims
+        self.rng = np.random.default_rng(seed)
 
-    def simulate_terminal_price(self, option:Option):
+    def simulate_terminal_price(self, spot, rate, maturity,vol,dividend_yield=0.0):
         """Simulate S_T using the exact solution."""
-        z = np.random.normal(size=self.n_sims)
-        drift = (self.r - self.q - 0.5 * self.vol**2) * option.maturity
-        diffusion = self.vol * np.sqrt(option.maturity) * z
-        return self.spot * np.exp(drift + diffusion)
+        z = self.rng.normal(size=self.n_sims)
+        drift = (rate - dividend_yield - 0.5 * vol**2) * maturity
+        diffusion = vol * np.sqrt(maturity) * z
+        return spot * np.exp(drift + diffusion)
 
-    def price(self, option:Option):
-        """Monte Carlo price of a European option."""
-        ST = self.simulate_terminal_price(option = option)
+    def price(self, option:Option,spot=None,vol=None, rate=None, maturity = None):  
+
+        spot = spot if spot is not None else self.spot
+        vol = vol if vol is not None else self.vol
+        rate = rate if rate is not None else self.rate
+        maturity = maturity if maturity is not None else option.maturity
+
+        ST = self.simulate_terminal_price(spot=spot, rate=rate, maturity=maturity,vol=vol)
         vec_f = np.vectorize(option.payoff)
         payoffs = vec_f(ST)
-        return np.exp(-self.r * option.maturity) * payoffs.mean()
+        return np.exp(-self.rate * maturity) * payoffs.mean()
 
     # ---------- Greeks ----------
     def delta(self, option:Option, eps=1e-4):
-        price_up = self.price(option.strike, spot=self.spot + eps)
-        price_down = self.price(option.strike, spot=self.spot - eps)
+        price_up = self.price(option,spot=self.spot + eps)
+        price_down = self.price(option, spot=self.spot - eps)
         return (price_up - price_down) / (2 * eps)
 
     def gamma(self, option:Option, eps=1e-4):
-        price_up = self.price(option.strike, spot=self.spot + eps)
-        price_mid = self.price(option.strike, spot=self.spot)
-        price_down = self.price(option.strike, spot=self.spot - eps)
+        price_up = self.price(option, spot=self.spot + eps)
+        price_mid = self.price(option, spot=self.spot)
+        price_down = self.price(option, spot=self.spot - eps)
         return (price_up - 2 * price_mid + price_down) / (eps ** 2)
 
     def vega(self, option:Option, eps=1e-4):
-        price_up = self.price(option.strike, vol=self.vol + eps)
-        price_down = self.price(option.strike, vol=self.vol - eps)
+        price_up = self.price(option, vol=self.vol + eps)
+        price_down = self.price(option, vol=self.vol - eps)
         return (price_up - price_down) / (2 * eps)
 
     def rho(self, option:Option, eps=1e-4):
-        price_up = self.price(option.strike, rate=self.rate + eps)
-        price_down = self.price(option.strike, rate=self.rate - eps)
+        price_up = self.price(option, rate=self.rate + eps)
+        price_down = self.price(option, rate=self.rate - eps)
         return (price_up - price_down) / (2 * eps)

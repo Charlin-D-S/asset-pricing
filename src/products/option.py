@@ -6,7 +6,6 @@ class Option:
         self.strike = strike
         self.maturity = maturity
 
-
 class EuropeanCall(Option):
     """
     European Call Option.
