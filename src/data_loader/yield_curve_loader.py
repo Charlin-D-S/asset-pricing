@@ -1,4 +1,4 @@
-from sdmx import Client
+import sdmx
 import pandas as pd
 import os
 
@@ -6,7 +6,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 DATA_PATH = os.path.join(BASE_DIR, "data", "yield_curve.csv")
 
 # Initialiser le client pour l'API de la BCE
-ecb = Client("ECB")
+ecb = sdmx.Client("ECB")
 
 KEYS = [
     "SR_3M", "SR_6M", "SR_9M",
@@ -22,7 +22,7 @@ def get_maturity(row):
     else : 
         code = code.replace("SR_",'')
         code = code.replace("Y",'')
-        return int(code[3])
+        return int(code)
 
 class YieldCurveLoader:
     def __init__(self):
