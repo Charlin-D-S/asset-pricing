@@ -39,14 +39,16 @@ yield_curve, curve_df = load_curve()
 # -----------------------------------------------------
 # DISPLAY DATAFRAME
 # -----------------------------------------------------
-st.subheader("📋 Zero-Coupon Yield Curve Data")
-st.dataframe(
-    curve_df.style.format({
-        "Zero Rate (%)": "{:.4f}"
-    }).highlight_min("Zero Rate (%)", color="#d4f4dd")
-     .highlight_max("Zero Rate (%)", color="#ffd4d4"),
-    use_container_width=True
-)
+# with st.expander("Show Zero-Coupon Yield Curve Data"):
+#     #st.dataframe(price_df.style.format({"Bond Price": "{:.4f}", "Rate Shift (bps)": "{:.0f}"}))
+#     #st.subheader("📋 Zero-Coupon Yield Curve Data")
+#     st.dataframe(
+#         curve_df.style.format({
+#             "Zero Rate (%)": "{:.4f}"
+#         }).highlight_min("Zero Rate (%)", color="#d4f4dd")
+#         .highlight_max("Zero Rate (%)", color="#ffd4d4"),
+#         use_container_width=True
+#     )
 
 # -----------------------------------------------------
 # TABS FOR VISUALIZATIONS
@@ -69,6 +71,16 @@ with tab1:
 
     fig.update_layout(height=450)
     st.plotly_chart(fig, use_container_width=True)
+    with st.expander("Show Zero-Coupon Yield Curve Data"):
+#     #st.dataframe(price_df.style.format({"Bond Price": "{:.4f}", "Rate Shift (bps)": "{:.0f}"}))
+#
+        st.dataframe(
+            curve_df.style.format({
+                "Zero Rate (%)": "{:.4f}"
+            }).highlight_min("Zero Rate (%)", color="#d4f4dd")
+            .highlight_max("Zero Rate (%)", color="#ffd4d4"),
+            use_container_width=True
+        )
 
 # -----------------------------------------------------
 # TAB 2 — DISCOUNT FACTORS
@@ -92,14 +104,15 @@ with tab2:
 
     fig_df.update_layout(height=450)
     st.plotly_chart(fig_df, use_container_width=True)
-
-    st.dataframe(
-        discount_df.style.format({
-            "Zero Rate (%)": "{:.4f}",
-            "Discount Factor": "{:.6f}"
-        }),
-        use_container_width=True
-    )
+    with st.expander("Show Discount Factor Yield Curve Data"):
+#   
+        st.dataframe(
+            discount_df.style.format({
+                "Zero Rate (%)": "{:.4f}",
+                "Discount Factor": "{:.6f}"
+            }),
+            use_container_width=True
+        )
 
 # -----------------------------------------------------
 # TAB 3 — FORWARD RATES
@@ -127,17 +140,18 @@ with tab3:
 
     fig_fwd.update_layout(height=450)
     st.plotly_chart(fig_fwd, use_container_width=True)
-
-    st.dataframe(
-        fwd_df.style.format({
-            "Zero Rate (%)": "{:.4f}",
-            "Forward Rate (%)": "{:.4f}"
-        }),
-        use_container_width=True
-    )
+    with st.expander("Show Forward Rate Yield Curve Data"):
+#   
+        st.dataframe(
+            fwd_df.style.format({
+                "Zero Rate (%)": "{:.4f}",
+                "Forward Rate (%)": "{:.4f}"
+            }),
+            use_container_width=True
+        )
 
 # -----------------------------------------------------
 # FOOTER
 # -----------------------------------------------------
 st.markdown("---")
-st.caption("Data source: ECB — Downloaded from local CSV via YieldCurveLoader.")
+st.caption("Data source: ECB.")

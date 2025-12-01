@@ -6,6 +6,7 @@ import os
 import plotly.express as px
 import plotly.graph_objects as go
 from typing import Optional
+from datetime import date, datetime
 
 # ensure src is importable
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
@@ -151,7 +152,16 @@ a1, a2, a3 = st.columns(3)
 with a1:
     strike = st.number_input("Strike (K)", value=float(spot), format="%.2f")
 with a2:
-    maturity = st.number_input("Maturity (years)", min_value=0.01, value=0.25, format="%.2f")
+    maturity_date = st.date_input(
+    "Select maturity date",
+    value=date.today(),
+    min_value=date.today()
+    )
+    # Convert to year fraction
+    today = date.today()
+    days_to_maturity = (maturity_date - today).days
+    maturity = days_to_maturity / 365.25
+    st.caption(f"Time to maturity (years) {maturity:.4f}")
 with a3:
     dividend_yield = st.number_input("Dividend yield (q)", value=0.0, format="%.2f")
 

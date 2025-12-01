@@ -92,5 +92,5 @@ class YieldCurve:
         Build a YieldCurve from csv data.
         """
         df = pd.read_csv(directory)
-        return cls(maturities=list(df.maturity), zero_rates=list(df.rate))
+        return cls(maturities=list(df.maturity), zero_rates=list(df.rate/100))
 
